@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hermes · 随身面板</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+  background: #0f0f13;
+  color: #e4e4e7;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 16px 40px;
+}
+h1 {
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { font-size: 12px; color: #71717a; margin-bottom: 24px; }
+
+.card {
+  width: 100%; max-width: 400px;
+  background: #18181b; border: 1px solid #27272a;
+  border-radius: 16px; padding: 18px;
+  margin-bottom: 14px;
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.card-title { font-size: 14px; font-weight: 600; }
+.badge {
+  font-size: 10px; font-weight: 600; padding: 3px 8px;
+  border-radius: 20px; background: #27272a; color: #a1a1aa;
+}
+.badge.on { background: #7c3aed22; color: #a78bfa; }
+
+/* Clock */
+.clock { font-size: 48px; font-weight: 700; letter-spacing: -0.03em; text-align: center; font-variant-numeric: tabular-nums; font-family: 'SF Mono', ui-monospace, monospace; }
+.date { text-align: center; font-size: 13px; color: #71717a; margin-top: 4px; }
+
+/* Status grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat {
+  background: #27272a; border-radius: 12px; padding: 14px; text-align: center;
+}
+.stat .val { font-size: 28px; font-weight: 700; color: #a78bfa; }
+.stat .lbl { font-size: 11px; color: #71717a; margin-top: 4px; }
+
+/* Links */
+.link-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid #27272a;
+}
+.link-row:last-child { border-bottom: 0; }
+.link-name { font-size: 14px; font-weight: 500; }
+.link-url { font-size: 11px; color: #52525b; margin-top: 2px; }
+.arrow { color: #52525b; font-size: 18px; }
+
+/* Button */
+.btn {
+  display: block; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #fff; border: 0; border-radius: 14px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn:active { opacity: 0.85; }
+
+.glow {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22c55e; box-shadow: 0 0 8px #22c55e88;
+  display: inline-block; margin-right: 6px;
+}
+</style>
+</head>
+<body>
+
+<h1>Hermes Hub</h1>
+<p class="subtitle" id="ping">🟢 在线 · 随时访问</p>
+
+<!-- 时钟 -->
+<div class="card">
+  <div class="clock" id="clock">00:00</div>
+  <div class="date" id="date">---</div>
+</div>
+
+<!-- 系统状态 -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">系统状态</span>
+    <span class="badge on">在线</span>
+  </div>
+  <div class="grid-2">
+    <div class="stat"><div class="val" id="skills">137</div><div class="lbl">Skills</div></div>
+    <div class="stat"><div class="val" id="agents">4</div><div class="lbl">Agents</div></div>
+    <div class="stat"><div class="val" id="disk">12TB</div><div class="lbl">网盘容量</div></div>
+    <div class="stat"><div class="val" id="used">8.83T</div><div class="lbl">已用</div></div>
+  </div>
+</div>
+
+<!-- 快捷入口 -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">快捷入口</span>
+  </div>
+  <a class="link-row" href="https://github.com/Jj55KKK/Updata" style="text-decoration:none;color:inherit;">
+    <div>
+      <div class="link-name">📦 更新仓库</div>
+      <div class="link-url">Jj55KKK/Updata</div>
+    </div>
+    <span class="arrow">→</span>
+  </a>
+  <div class="link-row" onclick="navigator.clipboard.writeText('whp')" style="cursor:pointer;">
+    <div><div class="link-name">🏠 Home Assistant</div><div class="link-url">本地控制中心</div></div>
+    <span class="arrow">→</span>
+  </div>
+  <div class="link-row" onclick="window.open('https://api.vectorengine.ai/console')" style="cursor:pointer;">
+    <div><div class="link-name">🤖 API Console</div><div class="link-url">api.vectorengine.ai</div></div>
+    <span class="arrow">→</span>
+  </div>
+</div>
+
+<!-- 百度网盘 -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">☁️ 百度网盘</span>
+  </div>
+  <div style="background:#27272a;border-radius:10px;height:8px;margin-bottom:8px;">
+    <div style="width:73.6%;height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:10px;"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;color:#71717a;">
+    <span>已用 8.83 TB</span><span>总容量 12 TB</span>
+  </div>
+</div>
+
+<script>
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent = 
+    now.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('date').textContent = 
+    now.toLocaleDateString('zh-CN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+tick(); setInterval(tick, 1000);
+</script>
+
+</body>
+</html>
