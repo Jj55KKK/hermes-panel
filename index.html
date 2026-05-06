@@ -14,6 +14,7 @@
   --accent-glow: rgba(139,92,246,0.3);
   --green: #22c55e;
   --amber: #f59e0b;
+  --red: #ef4444;
   --text: #e8e8ed;
   --muted: rgba(255,255,255,0.4);
   --font: 'Instrument Sans', -apple-system, sans-serif;
@@ -114,6 +115,83 @@ body {
 /* Shimmer for loading */
 @keyframes shimmer { 0% { background-position: -200px 0 } 100% { background-position: 200px 0 } }
 .shimmer { background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 100%); background-size: 200px 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+
+/* ── DeepSeek API Card ── */
+.ds-key-row {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 14px;
+}
+.ds-key-row input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.8rem; color: var(--text);
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  outline: none; transition: border-color 0.2s;
+}
+.ds-key-row input:focus { border-color: var(--accent); }
+.ds-key-row input::placeholder { color: rgba(255,255,255,0.2); }
+
+.ds-btn {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  border: none; border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 0.8rem; font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ds-btn:hover { background: #9b6dff; transform: translateY(-1px); }
+.ds-btn:active { transform: scale(0.97); }
+.ds-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.ds-balance {
+  display: none;
+}
+.ds-balance.show { display: block; }
+
+.ds-balance .grid3 {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+}
+.ds-balance .bstat {
+  background: rgba(139,92,246,0.05);
+  border: 1px solid rgba(139,92,246,0.08);
+  border-radius: 12px; padding: 12px 8px; text-align: center;
+}
+.ds-balance .bstat .bval {
+  font-size: 1.2rem; font-weight: 700;
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  color: var(--green);
+}
+.ds-balance .bstat .blbl {
+  font-size: 0.65rem; color: var(--muted); margin-top: 3px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+.ds-status {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; margin-top: 12px;
+  font-size: 0.75rem; color: var(--green);
+}
+.ds-status .ds-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 5px rgba(34,197,94,0.5);
+}
+.ds-status.error { color: var(--red); }
+.ds-status.error .ds-dot { background: var(--red); box-shadow: 0 0 5px rgba(239,68,68,0.5); }
+
+.ds-error {
+  display: none;
+  font-size: 0.75rem; color: var(--red);
+  text-align: center; padding: 8px 0;
+}
+.ds-error.show { display: block; }
 </style>
 </head>
 <body>
@@ -192,6 +270,36 @@ body {
     <div class="bar-info"><span>百度网盘</span><span id="hostname">macOS · Hermes</span></div>
   </div>
 
+  <!-- DeepSeek API -->
+  <div class="card">
+    <div class="card-title">DeepSeek API</div>
+    <div class="ds-key-row">
+      <input type="password" id="ds-key" placeholder="sk-…" autocomplete="off" spellcheck="false">
+      <button class="ds-btn" id="ds-btn" onclick="queryDS()">查询余额</button>
+    </div>
+    <div class="ds-balance" id="ds-balance">
+      <div class="grid3">
+        <div class="bstat">
+          <div class="bval" id="ds-total">--</div>
+          <div class="blbl">总余额</div>
+        </div>
+        <div class="bstat">
+          <div class="bval" id="ds-topup">--</div>
+          <div class="blbl">充值</div>
+        </div>
+        <div class="bstat">
+          <div class="bval" id="ds-granted">--</div>
+          <div class="blbl">赠送</div>
+        </div>
+      </div>
+      <div class="ds-status" id="ds-status">
+        <span class="ds-dot"></span>
+        <span id="ds-status-text">可用</span>
+      </div>
+    </div>
+    <div class="ds-error" id="ds-error"></div>
+  </div>
+
   <!-- Token -->
   <div class="card" style="text-align:center;">
     <div class="card-title">会话 Token</div>
@@ -202,7 +310,7 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
-// Clock
+// ═══════════ Clock ═══════════
 function tick() {
   const n = new Date();
   const h = String(n.getHours()).padStart(2,'0');
@@ -215,7 +323,7 @@ function tick() {
 }
 tick(); setInterval(tick,200);
 
-// Copy helper
+// ═══════════ Copy helper ═══════════
 function copyText(text,label) {
   navigator.clipboard.writeText(text).then(()=>{
     const t = document.getElementById('toast');
@@ -225,13 +333,106 @@ function copyText(text,label) {
   });
 }
 
-// Try fetch Hermes status
+// ═══════════ Hermes status ═══════════
 fetch('http://localhost:8642/health',{mode:'no-cors'})
   .then(()=>document.getElementById('hermes-status').innerHTML='<span class="dot live" style="width:7px"></span>在线')
   .catch(()=>document.getElementById('hermes-status').textContent='就绪');
 
-// Hostname
 try { document.getElementById('hostname').textContent = 'macOS · Hermes Agent'; } catch(e) {}
+
+// ═══════════ DeepSeek API ═══════════
+const DS_API = 'https://api.deepseek.com';
+
+function initDS() {
+  const saved = localStorage.getItem('hermes_ds_key');
+  if (saved) {
+    document.getElementById('ds-key').value = saved;
+    queryDS();
+  }
+}
+
+async function queryDS() {
+  const key = document.getElementById('ds-key').value.trim();
+  const btn = document.getElementById('ds-btn');
+  const balEl = document.getElementById('ds-balance');
+  const errEl = document.getElementById('ds-error');
+  const statusEl = document.getElementById('ds-status');
+  const statusText = document.getElementById('ds-status-text');
+
+  // Hide previous results
+  balEl.classList.remove('show');
+  errEl.classList.remove('show');
+  statusEl.classList.remove('error');
+
+  if (!key) {
+    showDSError('请输入 API Key');
+    return;
+  }
+
+  if (!key.startsWith('sk-')) {
+    showDSError('API Key 格式错误（应以 sk- 开头）');
+    return;
+  }
+
+  // Save key
+  localStorage.setItem('hermes_ds_key', key);
+
+  // Loading
+  btn.disabled = true;
+  btn.textContent = '查询中…';
+
+  try {
+    const res = await fetch(`${DS_API}/user/balance`, {
+      headers: { 'Authorization': `Bearer ${key}` }
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('API Key 无效');
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const info = data.balance_infos?.[0];
+    if (!info) throw new Error('余额数据为空');
+
+    document.getElementById('ds-total').textContent = '¥' + info.total_balance;
+    document.getElementById('ds-topup').textContent = '¥' + info.topped_up_balance;
+    document.getElementById('ds-granted').textContent = '¥' + info.granted_balance;
+
+    if (data.is_available) {
+      statusText.textContent = '可用';
+      statusEl.classList.remove('error');
+    } else {
+      statusText.textContent = '不可用';
+      statusEl.classList.add('error');
+    }
+
+    balEl.classList.add('show');
+    showToast('✓ 余额查询成功');
+  } catch (err) {
+    showDSError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '查询余额';
+  }
+}
+
+function showDSError(msg) {
+  const errEl = document.getElementById('ds-error');
+  errEl.textContent = msg;
+  errEl.classList.add('show');
+}
+
+// ═══════════ Toast ═══════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init DeepSeek on load
+initDS();
 </script>
 
 </body>
