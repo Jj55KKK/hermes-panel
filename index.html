@@ -195,6 +195,16 @@ body {
 }
 .ds-error.show { display: block; }
 
+.ds-platform-link {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.ds-platform-link:hover { color: var(--accent); }
+
 /* ── Skills Modal ── */
 .sk-modal-overlay {
   position: fixed; inset: 0; z-index: 200;
@@ -417,6 +427,7 @@ body {
       </div>
     </div>
     <div class="ds-error" id="ds-error"></div>
+    <a class="ds-platform-link" href="https://platform.deepseek.com/" target="_blank">🔗 打开 DeepSeek 控制台 (用量/账单/API Keys) →</a>
   </div>
 
   <!-- Token -->
