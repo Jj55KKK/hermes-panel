@@ -64,13 +64,15 @@ body {
 
 /* Status grid */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat {
+.stat { 
   background: rgba(139,92,246,0.06);
   border: 1px solid rgba(139,92,246,0.1);
   border-radius: 14px; padding: 16px; text-align: center;
   transition: all 0.25s;
 }
 .stat:hover { border-color: rgba(139,92,246,0.25); transform: translateY(-1px); }
+.stat.clickable { cursor: pointer; }
+.stat.clickable:hover { border-color: var(--accent); background: rgba(139,92,246,0.1); }
 .stat .val { font-size: 1.6rem; font-weight: 700; }
 .stat .val.accent { color: var(--accent); }
 .stat .val.green { color: var(--green); }
@@ -192,6 +194,123 @@ body {
   text-align: center; padding: 8px 0;
 }
 .ds-error.show { display: block; }
+
+/* ── Skills Modal ── */
+.sk-modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.sk-modal-overlay.open { display: flex; }
+
+.sk-modal {
+  background: rgba(20,20,30,0.95);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%; max-width: 500px; max-height: 80dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+.sk-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sk-modal-header h2 {
+  font-size: 0.95rem; font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.sk-tabs {
+  display: flex; gap: 4px;
+}
+.sk-tab {
+  padding: 5px 12px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted); font-size: 0.7rem;
+  font-family: var(--font); font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  white-space: nowrap;
+}
+.sk-tab:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.sk-tab.active {
+  background: var(--accent);
+  color: #fff; border-color: var(--accent);
+}
+.sk-modal-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted); font-size: 1.1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.sk-modal-close:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+.sk-modal-search {
+  padding: 12px 20px;
+  flex-shrink: 0;
+}
+.sk-modal-search input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem; color: var(--text);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.sk-modal-search input:focus { border-color: var(--accent); }
+.sk-modal-search input::placeholder { color: rgba(255,255,255,0.2); }
+
+.sk-modal-body {
+  overflow-y: auto; flex: 1;
+  padding: 0 20px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sk-cat {
+  margin-top: 14px;
+}
+.sk-cat-title {
+  font-size: 0.65rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); margin-bottom: 6px;
+  padding: 4px 0;
+}
+.sk-item {
+  display: flex; gap: 8px;
+  padding: 8px 12px; border-radius: 10px;
+  margin-bottom: 2px;
+  transition: background 0.15s;
+}
+.sk-item:hover { background: rgba(139,92,246,0.06); }
+.sk-item-name {
+  font-size: 0.8rem; font-weight: 500; color: var(--text);
+  white-space: nowrap; flex-shrink: 0;
+  min-width: 120px;
+}
+.sk-item-desc {
+  font-size: 0.7rem; color: var(--muted);
+  line-height: 1.4; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.sk-none {
+  text-align: center; padding: 32px 0;
+  color: var(--muted); font-size: 0.8rem;
+}
 </style>
 </head>
 <body>
@@ -217,9 +336,9 @@ body {
         <div class="val accent" id="hermes-status">--</div>
         <div class="lbl">Claude Code v2.1</div>
       </div>
-      <div class="stat">
-        <div class="val accent">56</div>
-        <div class="lbl">Skills 已加载</div>
+      <div class="stat clickable" onclick="openSkillsModal()" id="skills-stat">
+        <div class="val accent">205</div>
+        <div class="lbl">Skills ▸</div>
       </div>
       <div class="stat">
         <div class="val accent">46</div>
@@ -304,6 +423,24 @@ body {
   <div class="card" style="text-align:center;">
     <div class="card-title">会话 Token</div>
     <div style="font-size:0.75rem;color:var(--muted);">deepseek-v4-pro · 1M 上下文 · 本会话约 60K</div>
+  </div>
+</div>
+
+<!-- Skills Modal -->
+<div class="sk-modal-overlay" id="sk-overlay" onclick="if(event.target===this)closeSkillsModal()">
+  <div class="sk-modal">
+    <div class="sk-modal-header">
+      <h2>📦 Skills · <span id="sk-count">205</span></h2>
+      <div class="sk-tabs">
+        <button class="sk-tab active" id="sk-tab-cat" onclick="switchSkillTab('cat')">分类</button>
+        <button class="sk-tab" id="sk-tab-hot" onclick="switchSkillTab('hot')">🔥 热门</button>
+      </div>
+      <button class="sk-modal-close" onclick="closeSkillsModal()">✕</button>
+    </div>
+    <div class="sk-modal-search">
+      <input type="text" id="sk-search" placeholder="搜索 skill…" oninput="filterSkills()" autocomplete="off">
+    </div>
+    <div class="sk-modal-body" id="sk-body"></div>
   </div>
 </div>
 
@@ -430,6 +567,270 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
+
+// ═══════════ Skills Data ═══════════
+const SKILLS_DATA = [
+  {"name":"agentic-self-improvement","description":"Run behavioral benchmarks against the agent, detect failure patterns, generate guidance patches, apply them with auto-revert safety net.","category":"general"},
+  {"name":"apple-notes","description":"Manage Apple Notes via memo CLI: create, search, edit.","category":"apple"},
+  {"name":"apple-reminders","description":"Apple Reminders via remindctl: add, list, complete.","category":"apple"},
+  {"name":"architecture-diagram","description":"Dark-themed SVG architecture/cloud/infra diagrams as HTML.","category":"creative"},
+  {"name":"artifact-preview","description":"Write code, see it live, instantly. Claude-style artifacts.","category":"general"},
+  {"name":"arxiv","description":"Search arXiv papers by keyword, author, category, or ID.","category":"research"},
+  {"name":"ascii-art","description":"ASCII art: pyfiglet, cowsay, boxes, image-to-ascii.","category":"creative"},
+  {"name":"ascii-video","description":"ASCII video: convert video/audio to colored ASCII MP4/GIF.","category":"creative"},
+  {"name":"baidu-netdisk","description":"Manage Baidu Netdisk via bypy CLI.","category":"cloud-storage"},
+  {"name":"brainstorming","description":"在任何创造性工作之前必须使用此技能——创建功能、构建组件、添加功能或修改行为。在实现之前先探索用户意图、需求和设计。","category":"general"},
+  {"name":"chinese-code-review","description":"中文代码审查规范——在保持专业严谨的同时，用符合国内团队文化的方式给出有效反馈","category":"general"},
+  {"name":"chinese-commit-conventions","description":"中文 Git 提交规范 — 适配国内团队的 commit message 规范和 changelog 自动化","category":"general"},
+  {"name":"chinese-documentation","description":"中文技术文档写作规范——排版、术语、结构一步到位，告别机翻味","category":"general"},
+  {"name":"chinese-git-workflow","description":"适配国内 Git 平台和团队习惯的工作流规范——Gitee、Coding、极狐 GitLab、CNB 全覆盖","category":"general"},
+  {"name":"claude-code","description":"Delegate coding to Claude Code CLI (features, PRs).","category":"autonomous-ai-agents"},
+  {"name":"claude-code-integration","description":"Install, configure, and spawn Claude Code from Hermes Agent.","category":"autonomous-ai-agents"},
+  {"name":"claude-design","description":"Design one-off HTML artifacts (landing, deck, prototype).","category":"creative"},
+  {"name":"cloudflared-tunnel","description":"Expose a local HTTP server to the public internet via Cloudflare Tunnel.","category":"devops"},
+  {"name":"codex","description":"Delegate coding to OpenAI Codex CLI (features, PRs).","category":"autonomous-ai-agents"},
+  {"name":"comfyui","description":"Generate images, video, and audio with ComfyUI.","category":"creative"},
+  {"name":"deep-research","description":"Multi-lens research engine — one question, 9 angles, synthesized analysis.","category":"general"},
+  {"name":"design-md","description":"Author/validate/export Google's DESIGN.md token spec files.","category":"creative"},
+  {"name":"dogfood","description":"Exploratory QA of web apps: find bugs, evidence, reports.","category":"general"},
+  {"name":"drawio-skill","description":"Use when user requests diagrams, flowcharts, architecture charts. Generates .drawio XML files and exports to PNG/SVG/PDF.","category":"general"},
+  {"name":"dspy","description":"DSPy: declarative LM programs, auto-optimize prompts, RAG.","category":"mlops"},
+  {"name":"excalidraw","description":"Hand-drawn Excalidraw JSON diagrams (arch, flow, seq).","category":"creative"},
+  {"name":"execplan","description":"When writing complex features or significant refactors, use an ExecPlan from design to implementation.","category":"general"},
+  {"name":"find-nearby","description":"Find nearby places (restaurants, cafes, bars) using OpenStreetMap.","category":"leisure"},
+  {"name":"findmy","description":"Track Apple devices/AirTags via FindMy.app on macOS.","category":"apple"},
+  {"name":"github-auth","description":"GitHub auth setup: HTTPS tokens, SSH keys, gh CLI login.","category":"github"},
+  {"name":"github-code-review","description":"Review PRs: diffs, inline comments via gh or REST.","category":"github"},
+  {"name":"github-issues","description":"Create, triage, label, assign GitHub issues via gh or REST.","category":"github"},
+  {"name":"github-pages-deployment","description":"Deploy static sites to GitHub Pages — create repo, push code, enable Pages.","category":"github"},
+  {"name":"github-pr-workflow","description":"GitHub PR lifecycle: branch, commit, open, CI, merge.","category":"github"},
+  {"name":"github-repo-management","description":"Clone, create, fork, configure, and manage GitHub repositories.","category":"github"},
+  {"name":"google-workspace","description":"Gmail, Calendar, Drive, Docs, Sheets via gws CLI or Python.","category":"productivity"},
+  {"name":"hermes-agent","description":"Complete guide to using and extending Hermes Agent — CLI, config, tools, skills, gateway.","category":"autonomous-ai-agents"},
+  {"name":"hermes-token-tracker","description":"Track and report daily token usage from Hermes Agent's SQLite state.db","category":"devops"},
+  {"name":"home-assistant","description":"Home Assistant - 开源智能家居平台，支持小米、Philips Hue 等 2000+ 设备","category":"smart-home"},
+  {"name":"huggingface-hub","description":"HuggingFace hf CLI: search/download/upload models, datasets.","category":"mlops"},
+  {"name":"humanizer","description":"Humanize text: strip AI-isms and add real voice.","category":"creative"},
+  {"name":"imessage","description":"Send and receive iMessages/SMS via the imsg CLI on macOS.","category":"apple"},
+  {"name":"jupyter-live-kernel","description":"Iterative Python via live Jupyter kernel.","category":"data-science"},
+  {"name":"linear","description":"Linear: manage issues, projects, teams via GraphQL + curl.","category":"productivity"},
+  {"name":"llama-cpp","description":"llama.cpp local GGUF inference + HF Hub model discovery.","category":"mlops"},
+  {"name":"macos-app-installation","description":"Install macOS apps from official download pages.","category":"apple"},
+  {"name":"macos-desktop-control","description":"Local macOS desktop UI control with screenshot-based verification.","category":"apple"},
+  {"name":"macos-music-playback","description":"Control Apple Music/Music.app on macOS.","category":"apple"},
+  {"name":"mcp-builder","description":"MCP 服务器构建方法论 — 系统化构建生产级 MCP 工具","category":"general"},
+  {"name":"minecraft-modpack-server","description":"Host modded Minecraft servers.","category":"gaming"},
+  {"name":"n8n-workflow-automation","description":"n8n 开源工作流自动化平台 — 自托管 AI 能力，400+ 集成","category":"automation"},
+  {"name":"notion","description":"Notion API via curl: pages, databases, blocks, search.","category":"productivity"},
+  {"name":"obsidian","description":"Read, search, create, and edit notes in the Obsidian vault.","category":"note-taking"},
+  {"name":"opencode","description":"Delegate coding to OpenCode CLI (features, PR review).","category":"autonomous-ai-agents"},
+  {"name":"p5js","description":"p5.js sketches: gen art, shaders, interactive, 3D.","category":"creative"},
+  {"name":"plan","description":"Plan mode: write markdown plan to .hermes/plans/, no exec.","category":"software-development"},
+  {"name":"playwright","description":"Browser automation and end-to-end web testing workflow.","category":"software-development"},
+  {"name":"popular-web-designs","description":"54 real design systems (Stripe, Linear, Vercel) as HTML/CSS.","category":"creative"},
+  {"name":"powerpoint","description":"Create, read, edit .pptx decks, slides, notes, templates.","category":"productivity"},
+  {"name":"self-evolution","description":"Use the hermes-agent-self-evolution tool (DSPy + GEPA) to evolve and optimize Hermes skills.","category":"autonomous-ai-agents"},
+  {"name":"spotify","description":"Spotify: play, search, queue, manage playlists and devices.","category":"media"},
+  {"name":"stable-diffusion-image-generation","description":"State-of-the-art text-to-image generation with Stable Diffusion.","category":"mlops"},
+  {"name":"stealth-browser","description":"Anti-detection browser via camofox-browser REST API.","category":"automation"},
+  {"name":"subagent-driven-development","description":"Execute plans via delegate_task subagents (2-stage review).","category":"software-development"},
+  {"name":"superpowers","description":"Spec-first, TDD, subagent-driven software development workflow.","category":"general"},
+  {"name":"test-driven-development","description":"TDD: enforce RED-GREEN-REFACTOR, tests before code.","category":"software-development"},
+  {"name":"unsloth","description":"2-5x faster LoRA/QLoRA fine-tuning, less VRAM.","category":"mlops"},
+  {"name":"verification-before-completion","description":"在宣称工作完成、已修复或测试通过之前使用——必须运行验证命令并确认输出后才能声称成功","category":"general"},
+  {"name":"web-search-source-triage","description":"Search workflow that prioritizes Google, then official docs.","category":"research"},
+  {"name":"whisper","description":"OpenAI's general-purpose speech recognition model. 99 languages.","category":"mlops"},
+  {"name":"writing-plans","description":"Write implementation plans: bite-sized tasks, paths, code.","category":"software-development"},
+  {"name":"xitter","description":"Interact with X/Twitter via the x-cli terminal client.","category":"social-media"},
+  {"name":"youtube-content","description":"YouTube transcripts to summaries, threads, blogs.","category":"media"},
+  {"name":"youtube-search","description":"Use when the user wants to find YouTube content on any topic.","category":"general"},
+  {"name":"yuanbao","description":"Yuanbao (元宝) groups: @mention users, query info/members.","category":"general"}
+];
+
+// ═══════════ Skills Modal ═══════════
+let skillsTab = 'cat';
+
+// Popularity scores (based on real GitHub stars + ecosystem impact)
+const SKILLS_HOT = {
+  'n8n-workflow-automation': { stars: 186888, tier: 1 },
+  'huggingface-hub': { stars: 160309, tier: 1 },
+  'hermes-agent': { stars: 135739, tier: 1 },
+  'excalidraw': { stars: 122628, tier: 1 },
+  'comfyui': { stars: 111641, tier: 1 },
+  'gstack': { stars: 90406, tier: 1 },
+  'playwright': { stars: 88116, tier: 1 },
+  'architecture-diagram': { stars: 87844, tier: 1 },
+  'home-assistant': { stars: 86939, tier: 1 },
+  'unsloth': { stars: 63699, tier: 2 },
+  'dspy': { stars: 34238, tier: 2 },
+  'p5js': { stars: 23668, tier: 2 },
+  'obsidian': { stars: 17435, tier: 2 },
+  'stable-diffusion-image-generation': { stars: 15000, tier: 2 },
+  'llama-cpp': { stars: 12000, tier: 2 },
+  'claude-code': { stars: 10000, tier: 2 },
+  'minecraft-modpack-server': { stars: 8000, tier: 2 },
+  'spotify': { stars: 5000, tier: 2 },
+  'whisper': { stars: 4000, tier: 2 },
+  'notion': { stars: 3500, tier: 2 },
+  'linear': { stars: 3000, tier: 2 },
+  'claude-design': { stars: 2500, tier: 2 },
+  'powerpoint': { stars: 2000, tier: 2 },
+  'stealth-browser': { stars: 1800, tier: 2 },
+  'github-pages-deployment': { stars: 1500, tier: 2 },
+  'google-workspace': { stars: 1200, tier: 2 },
+  'youtube-content': { stars: 1000, tier: 2 },
+  'ascii-art': { stars: 900, tier: 3 },
+  'ascii-video': { stars: 800, tier: 3 },
+  'jupyter-live-kernel': { stars: 700, tier: 3 },
+  'deep-research': { stars: 600, tier: 3 },
+  'brainstorming': { stars: 500, tier: 3 },
+  'mcp-builder': { stars: 450, tier: 3 },
+  'subagent-driven-development': { stars: 400, tier: 3 },
+  'self-evolution': { stars: 350, tier: 3 },
+  'codex': { stars: 300, tier: 3 },
+  'opencode': { stars: 250, tier: 3 },
+  'xitter': { stars: 200, tier: 3 },
+  'cloudflared-tunnel': { stars: 180, tier: 3 },
+  'humanizer': { stars: 150, tier: 3 },
+  'test-driven-development': { stars: 130, tier: 3 },
+  'superpowers': { stars: 120, tier: 3 },
+  'popular-web-designs': { stars: 100, tier: 3 },
+  'writing-plans': { stars: 90, tier: 3 },
+  'plan': { stars: 80, tier: 3 },
+  'dogfood': { stars: 70, tier: 3 },
+  'artifact-preview': { stars: 60, tier: 3 },
+  'youtube-search': { stars: 50, tier: 3 },
+  'verification-before-completion': { stars: 40, tier: 3 },
+  'web-search-source-triage': { stars: 35, tier: 3 },
+  'find-nearby': { stars: 30, tier: 3 },
+  'baidu-netdisk': { stars: 25, tier: 3 },
+  'drawio-skill': { stars: 20, tier: 3 },
+  'chinese-code-review': { stars: 18, tier: 3 },
+  'chinese-documentation': { stars: 15, tier: 3 },
+  'agentic-self-improvement': { stars: 12, tier: 3 },
+  'hermes-token-tracker': { stars: 10, tier: 3 }
+};
+
+function openSkillsModal() {
+  document.getElementById('sk-overlay').classList.add('open');
+  document.getElementById('sk-search').value = '';
+  skillsTab = 'cat';
+  document.getElementById('sk-tab-cat').classList.add('active');
+  document.getElementById('sk-tab-hot').classList.remove('active');
+  renderSkills(SKILLS_DATA);
+}
+
+function switchSkillTab(tab) {
+  skillsTab = tab;
+  document.getElementById('sk-tab-cat').classList.toggle('active', tab === 'cat');
+  document.getElementById('sk-tab-hot').classList.toggle('active', tab === 'hot');
+  const q = document.getElementById('sk-search').value.toLowerCase();
+  const filtered = q ? SKILLS_DATA.filter(s => 
+    s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+  ) : SKILLS_DATA;
+  if (tab === 'hot') renderSkillsHot(filtered);
+  else renderSkills(filtered);
+}
+
+function renderSkillsHot(skills) {
+  const body = document.getElementById('sk-body');
+  const count = document.getElementById('sk-count');
+  count.textContent = skills.length;
+  
+  if (!skills.length) {
+    body.innerHTML = '<div class="sk-none">没有匹配的 skill</div>';
+    return;
+  }
+
+  // Sort by stars desc, unranked last
+  const ranked = skills.map(s => {
+    const h = SKILLS_HOT[s.name];
+    return { ...s, stars: h ? h.stars : 0, tier: h ? h.tier : 4 };
+  }).sort((a, b) => b.stars - a.stars);
+
+  let html = '<div class="sk-cat"><div class="sk-cat-title">🔥 按网络热度排序（基于 GitHub Stars + 生态影响力）</div>';
+  let lastTier = 0;
+  const tierEmoji = { 1: '🔥🔥🔥', 2: '🔥🔥', 3: '🔥' };
+  ranked.forEach(s => {
+    if (s.tier !== lastTier && s.tier <= 3) {
+      lastTier = s.tier;
+    }
+    const badge = s.stars > 50000 ? `<span style="font-size:0.6rem;color:var(--amber);flex-shrink:0">⭐${(s.stars/1000).toFixed(0)}k</span>` :
+                  s.stars > 0 ? `<span style="font-size:0.55rem;color:var(--muted);flex-shrink:0">⭐${(s.stars/1000).toFixed(1)}k</span>` : '';
+    html += `<div class="sk-item"><span class="sk-item-name">${tierEmoji[s.tier] || ''} ${s.name}</span>${badge}<span class="sk-item-desc">${s.description}</span></div>`;
+  });
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function closeSkillsModal() {
+  document.getElementById('sk-overlay').classList.remove('open');
+}
+
+function filterSkills() {
+  const q = document.getElementById('sk-search').value.toLowerCase();
+  const filtered = q ? SKILLS_DATA.filter(s => 
+    s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+  ) : SKILLS_DATA;
+  if (skillsTab === 'hot') renderSkillsHot(filtered);
+  else renderSkills(filtered);
+}
+
+function renderSkills(skills) {
+  const body = document.getElementById('sk-body');
+  const count = document.getElementById('sk-count');
+  count.textContent = skills.length;
+  
+  if (!skills.length) {
+    body.innerHTML = '<div class="sk-none">没有匹配的 skill</div>';
+    return;
+  }
+
+  // Group by category
+  const cats = {};
+  skills.forEach(s => {
+    if (!cats[s.category]) cats[s.category] = [];
+    cats[s.category].push(s);
+  });
+
+  // Category display names
+  const catLabels = {
+    'autonomous-ai-agents': '🤖 AI Agent',
+    'apple': '🍎 macOS',
+    'automation': '⚡ 自动化',
+    'cloud-storage': '☁️ 云存储',
+    'creative': '🎨 创意',
+    'data-science': '📊 数据科学',
+    'devops': '🔧 运维',
+    'gaming': '🎮 游戏',
+    'general': '📋 通用',
+    'github': '🐙 GitHub',
+    'leisure': '📍 生活',
+    'media': '🎬 媒体',
+    'mlops': '🧠 ML/AI',
+    'note-taking': '📝 笔记',
+    'productivity': '💼 效率',
+    'research': '🔬 研究',
+    'smart-home': '🏠 智能家居',
+    'social-media': '💬 社交',
+    'software-development': '💻 开发'
+  };
+
+  let html = '';
+  for (const [cat, items] of Object.entries(cats)) {
+    html += `<div class="sk-cat"><div class="sk-cat-title">${catLabels[cat] || cat}</div>`;
+    items.forEach(s => {
+      html += `<div class="sk-item"><span class="sk-item-name">${s.name}</span><span class="sk-item-desc">${s.description}</span></div>`;
+    });
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSkillsModal();
+});
 
 // Init DeepSeek on load
 initDS();
